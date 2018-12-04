@@ -252,11 +252,6 @@ const queries = {
       },
     },
     async resolve(_, args, req) {
-      // Need to be authenticated
-      if (!req.remoteUser) {
-        throw new errors.Unauthorized("You don't have permission to access invoices for this user");
-      }
-
       // Fetch transaction
       const transaction = await models.Transaction.findOne({
         where: { uuid: args.transactionUuid },
@@ -270,7 +265,9 @@ const queries = {
       const fromCollectiveId = transaction.paymentMethodProviderCollectiveId();
 
       // Ensure user is admin of collective
-      if (!req.remoteUser.isAdmin(fromCollectiveId)) {
+      if (!req.remoteUser) {
+        throw new errors.Unauthorized('You need to be authenticated to access invoices');
+      } else if (!req.remoteUser.isAdmin(fromCollectiveId)) {
         throw new errors.Unauthorized("You don't have permission to access invoices for this user");
       }
 
