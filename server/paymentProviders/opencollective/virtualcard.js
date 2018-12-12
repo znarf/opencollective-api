@@ -137,10 +137,12 @@ async function processOrder(order) {
  * @param {[limitedToTags]} [args.limitedToTags] Limit this payment method to donate to collectives having those tags
  * @param {[limitedToCollectiveIds]} [args.limitedToCollectiveIds] Limit this payment method to those collective ids
  * @param {[limitedToHostCollectiveIds]} [args.limitedToHostCollectiveIds] Limit this payment method to collectives hosted by those collective ids
+ * @param {boolean} sendEmailAsync if true, emails will be sent in background
+ *  and we won't check if it has properly been sent to confirm
  * @returns {models.PaymentMethod + code} return the virtual card payment method with
             an extra property "code" that is basically the last 8 digits of the UUID
  */
-async function create(args, remoteUser) {
+async function create(args, remoteUser, sendEmailAsync = false) {
   const collective = await models.Collective.findById(args.CollectiveId);
   let SourcePaymentMethodId = args.PaymentMethodId;
   let sourcePaymentMethod;
@@ -210,6 +212,17 @@ async function create(args, remoteUser) {
     updatedAt: new Date(),
     data,
   });
+
+  // Send email if provided
+  const email = get(paymentMethod, 'data.email');
+  if (email) {
+    if (sendEmailAsync) {
+      // TODO
+    } else {
+      // TODO
+    }
+  }
+
   return paymentMethod;
 }
 

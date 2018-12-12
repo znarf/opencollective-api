@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { omit, times } from 'lodash';
 import {
   claimCollective,
   createCollective,
@@ -404,6 +404,7 @@ const mutations = {
   },
   createPaymentMethod: {
     type: PaymentMethodType,
+    deprecationReason: 'Please use createVirtualCards',
     args: {
       type: { type: new GraphQLNonNull(GraphQLString) },
       currency: { type: new GraphQLNonNull(GraphQLString) },
@@ -433,6 +434,73 @@ const mutations = {
         throw Error('you need to define either the amount or the monthlyLimitPerMember of the payment method.');
       }
       return createPaymentMethod(args, req.remoteUser);
+    },
+  },
+  createVirtualCards: {
+    type: new GraphQLList(PaymentMethodType),
+    args: {
+      currency: { type: new GraphQLNonNull(GraphQLString) },
+      amount: { type: GraphQLInt },
+      monthlyLimitPerMember: { type: GraphQLInt },
+      limitedToTags: {
+        type: new GraphQLList(GraphQLString),
+        description: 'Limit this payment method to make donations to collectives having those tags',
+      },
+      limitedToCollectiveIds: {
+        type: new GraphQLList(GraphQLInt),
+        description: 'Limit this payment method to make donations to those collectives',
+      },
+      limitedToHostCollectiveIds: {
+        type: new GraphQLList(GraphQLInt),
+        description: 'Limit this payment method to make donations to the collectives hosted by those hosts',
+      },
+      CollectiveId: { type: new GraphQLNonNull(GraphQLInt) },
+      PaymentMethodId: { type: GraphQLInt },
+      description: {
+        type: GraphQLString,
+        description: 'A custom message attached to the email that will be sent for this virtual card',
+      },
+      expiryDate: { type: GraphQLString },
+      emails: {
+        type: new GraphQLList(GraphQLString),
+        description: 'A list of emails to generate virtual cards for (only if numberOfVirtualCards is not provided)',
+      },
+      numberOfVirtualCards: {
+        type: GraphQLInt,
+        description: 'Number of virtual cards to generate (only if emails is not provided)',
+      },
+    },
+    resolve: (_, args, req) => {
+      // Check params
+      if (!args.amount && !args.monthlyLimitPerMember) {
+        throw Error('you need to define either the amount or the monthlyLimitPerMember of the payment method.');
+      }
+      if (!args.numberOfVirtualCards && (!args.emails || args.emails.length === 0)) {
+        throw Error(
+          'You must either pass a number of virtual cards to create with `numberOfVirtualCards` of an emails list with `emails`',
+        );
+      }
+      if (args.numberOfVirtualCards && args.emails) {
+        throw Error('numberOfVirtualCards and emails cannot be passed at the same time, you must select only one');
+      }
+
+      // Check business logic
+      args.emails = args.emails || [];
+      const count = args.numberOfVirtualCards || args.emails.length;
+      if (!count || count > 100) {
+        throw Error('Number of gift cards is invalid. It must be between 1 and 100.');
+      }
+
+      // Create cards
+      return Promise.all(
+        times(count, index => {
+          const email = args.emails[index];
+          return createPaymentMethod(
+            { ...args, type: 'virtualcard', data: email ? { email: email } : null },
+            req.remoteUser,
+          );
+        }),
+      );
     },
   },
   claimPaymentMethod: {
