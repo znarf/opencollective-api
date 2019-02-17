@@ -68,7 +68,7 @@ const queries = [
     filename: 'transactions.csv',
     query: `
     SELECT 
-    t."createdAt", c.slug as "collective slug", t.type as "transaction type", t.amount::float / 100, 
+    t."createdAt", c.slug as "collective slug", t.type as "transaction type", t.amount::float / 100 as amount, 
     t.currency, fc.slug as "from slug", fc.type as "from type", t.description, e.category as "expense category", 
     h.slug as "host slug", t."hostCurrency", t."hostCurrencyFxRate", 
     pm.service as "payment processor", pm.type as "payment method type",
@@ -86,19 +86,40 @@ const queries = [
     ORDER BY t.id ASC
       `,
   },
+  {
+    filename: 'expenses.csv',
+    query: `
+    SELECT e.id, c.slug as "collective slug", e."createdAt", e."updatedAt", e.status, e.category, e.status, 
+    e.amount::float / 100 as amount, e.currency, e."incurredAt", uc.slug as "user slug", e.description,
+    e."payoutMethod", t."createdAt" as "paidAt"
+    FROM "Expenses" e 
+    LEFT JOIN "Users" u ON u.id = e."UserId"
+    LEFT JOIN "Collectives" uc ON u."CollectiveId" = uc.id
+    LEFT JOIN "Collectives" c ON e."CollectiveId" = c.id
+    LEFT JOIN "Transactions" t ON t."ExpenseId" = e.id
+    WHERE e."createdAt" >= :startDate AND e."createdAt" < :endDate
+      AND e."deletedAt" IS NULL
+      `,
+  },
 ];
 
 const d = process.env.START_DATE ? new Date(process.env.START_DATE) : new Date();
 d.setMonth(d.getMonth() - 1);
 
 const startDate = new Date(d.getFullYear(), d.getMonth(), 1);
-const endDate = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+const endDate = process.env.END_DATE ? new Date(process.env.END_DATE) : new Date(d.getFullYear(), d.getMonth() + 1, 1);
 
-console.log('startDate', startDate, 'endDate', endDate);
+const days = Math.floor((endDate.getTime() - startDate.getTime()) / 86400 / 1000);
+
+console.log('startDate', startDate, 'endDate', endDate, 'days', days);
 let month = startDate.getMonth() + 1;
 if (month < 10) month = `0${month}`;
 
-const path = `${GoogleDrivePath}/Data/${startDate.getFullYear()}-${month}`;
+let path = `${GoogleDrivePath}/Data/${startDate.getFullYear()}`;
+if (days > 20 && days < 40) {
+  path += `-${month}`;
+}
+
 try {
   console.log('>>> mkdir', path);
   fs.mkdirSync(path);
@@ -123,6 +144,9 @@ async function run() {
 
     const data = res.map(row => {
       if (row.createdAt) row.createdAt = moment(row.createdAt).format('YYYY-MM-DD HH:mm');
+      if (row.updatedAt) row.updatedAt = moment(row.updatedAt).format('YYYY-MM-DD HH:mm');
+      if (row.incurredAt) row.incurredAt = moment(row.incurredAt).format('YYYY-MM-DD HH:mm');
+      if (row.paidAt) row.paidAt = moment(row.paidAt).format('YYYY-MM-DD HH:mm');
       Object.keys(row).map(key => {
         if (row[key] === null) row[key] = '';
       });
@@ -130,8 +154,14 @@ async function run() {
     });
 
     return json2csv({ data: res }, (err, csv) => {
-      if (err) console.log(err);
-      else fs.writeFileSync(`${path}/${query.filename}`, csv);
+      const filename = `${path}/${query.filename}`;
+      if (err) {
+        console.log(`⚠ ${filename}`);
+        console.log(err);
+      } else {
+        fs.writeFileSync(filename, csv);
+        console.log(`✓ ${filename}`);
+      }
     });
   });
   console.log('done');
