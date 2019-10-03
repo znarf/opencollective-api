@@ -9,6 +9,7 @@ import debugLib from 'debug';
 import models, { sequelize, Op } from '../../server/models';
 import twitter from '../../server/lib/twitter';
 import slackLib from '../../server/lib/slack';
+import { types as collectiveTypes } from '../../server/constants/collectives';
 import { pluralize } from '../../server/lib/utils';
 import _, { pick, get, set } from 'lodash';
 
@@ -31,7 +32,7 @@ const init = () => {
     },
     limit: 30,
     group: ['CollectiveId', 'collective.id'],
-    include: [{ model: models.Collective, as: 'collective' }],
+    include: [{ model: models.Collective, where: { type: { [Op.ne]: collectiveTypes.EVENT } }, as: 'collective' }],
   })
     .tap(transactionsGroups => {
       console.log(`${transactionsGroups.length} different collectives got new backers since ${TenMinutesAgo}`);
@@ -160,7 +161,7 @@ const compileTweet = async (collective, template, twitterAccount) => {
   }
 
   let tweet = twitter.compileTweet(template, replacements, get(twitterAccount, `settings.${template}.tweet`));
-  tweet += `\nhttps://opencollective.com/${collective.slug}`;
+  tweet += `\nhttps://opencollective.com${collective.path}`;
   return tweet;
 };
 
