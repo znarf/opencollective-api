@@ -16,7 +16,6 @@ import * as collectives from './controllers/collectives';
 import * as RestApi from './graphql/v1/restapi';
 import getHomePage from './controllers/homepage';
 import uploadImage from './controllers/images';
-import { createPaymentMethod } from './controllers/paymentMethods';
 import * as test from './controllers/test';
 import * as users from './controllers/users';
 import stripeWebhook from './controllers/webhooks';
@@ -199,13 +198,6 @@ export default app => {
    * Users.
    */
   app.get('/users/exists', required('email'), users.exists); // Checks the existence of a user based on email.
-
-  /**
-   * Create a payment method.
-   *
-   *  Let's assume for now a paymentMethod is linked to a user.
-   */
-  app.post('/v1/payment-methods', createPaymentMethod);
 
   /**
    * Collectives.
