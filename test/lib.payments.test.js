@@ -49,6 +49,12 @@ describe('lib.payments.test.js', () => {
     sandbox.stub(stripe.tokens, 'create').callsFake(() => Promise.resolve({ id: 'tok_1AzPXGD8MNtzsDcgwaltZuvp' }));
     sandbox.stub(stripe.paymentIntents, 'create').callsFake(() =>
       Promise.resolve({
+        id: 'pi_1F82vtBYycQg1OMfS2Rctiau',
+        status: 'requires_confirmation',
+      }),
+    );
+    sandbox.stub(stripe.paymentIntents, 'confirm').callsFake(() =>
+      Promise.resolve({
         charges: { data: [{ id: 'ch_1AzPXHD8MNtzsDcgXpUhv4pm' }] },
         status: 'succeeded',
       }),

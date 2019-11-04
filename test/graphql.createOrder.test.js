@@ -126,7 +126,7 @@ describe('createOrder', () => {
         currency: 'eur',
         status: 'succeeded',
       },
-      paymentIntent: {
+      paymentIntentConfirmed: {
         charges: { data: [{ id: 'ch_1AzPXHD8MNtzsDcgXpUhv4pm', currency: 'eur', status: 'succeeded' }] },
         status: 'succeeded',
       },

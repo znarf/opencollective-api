@@ -80,7 +80,14 @@ describe('graphql.tiers.test', () => {
     sandbox.stub(stripe.customers, 'create').callsFake(() => Promise.resolve({ id: 'cus_B5s4wkqxtUtNyM' }));
     sandbox.stub(stripe.customers, 'retrieve').callsFake(() => Promise.resolve({ id: 'cus_B5s4wkqxtUtNyM' }));
 
-    sandbox.stub(stripe.paymentIntents, 'create').callsFake(data =>
+    sandbox.stub(stripe.paymentIntents, 'create').callsFake(() =>
+      Promise.resolve({
+        id: 'pi_1F82vtBYycQg1OMfS2Rctiau',
+        status: 'requires_confirmation',
+      }),
+    );
+
+    sandbox.stub(stripe.paymentIntents, 'confirm').callsFake(data =>
       Promise.resolve({
         charges: {
           data: [

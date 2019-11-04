@@ -92,7 +92,7 @@ describe('updateOrder', () => {
 
     utils.stubStripeCreate(sandbox, {
       // charge: { currency: 'eur', status: 'succeeded' },
-      paymentIntent: {
+      paymentIntentConfirmed: {
         charges: { data: [{ currency: 'eur', status: 'succeeded' }] },
         status: 'succeeded',
       },
