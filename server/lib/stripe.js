@@ -1,7 +1,12 @@
 import Stripe from 'stripe';
 import config from 'config';
 
-export default Stripe(config.stripe.secret);
+const stripe = Stripe(config.stripe.secret);
+
+// Retry a request twice before giving up
+stripe.setMaxNetworkRetries(2);
+
+export default stripe;
 
 export const extractFees = balance => {
   const fees = {

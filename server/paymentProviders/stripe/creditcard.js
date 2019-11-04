@@ -93,36 +93,36 @@ const createChargeAndTransactions = async (hostStripeAccount, { order, hostStrip
   // Make sure data is available (breaking in some old tests)
   order.data = order.data || {};
 
-  let paymentIntent;
-  if (!order.data || !order.data.paymentIntent) {
-    const payload = {
+  let paymentIntent = order.data && order.data.paymentIntent;
+  if (!paymentIntent) {
+    const createPayload = {
       amount: order.totalAmount,
       currency: order.currency,
       customer: hostStripeCustomer.id,
       description: order.description,
-      confirm: true,
-      confirmation_method: 'manual',
+      confirm: false,
       metadata: {
         from: `${config.host.website}/${order.fromCollective.slug}`,
         to: `${config.host.website}/${order.collective.slug}`,
       },
     };
     if (platformFee) {
-      payload.application_fee_amount = platformFee;
+      createPayload.application_fee_amount = platformFee;
     }
-    if (order.interval) {
-      payload.setup_future_usage = 'off_session';
-    } else if (!order.processedAt && order.data.savePaymentMethod) {
-      payload.setup_future_usage = 'on_session';
-    }
-    paymentIntent = await stripe.paymentIntents.create(payload, {
-      stripe_account: hostStripeAccount.username,
-    });
-  } else {
-    paymentIntent = await stripe.paymentIntents.confirm(order.data.paymentIntent.id, {
+    paymentIntent = await stripe.paymentIntents.create(createPayload, {
       stripe_account: hostStripeAccount.username,
     });
   }
+
+  const confirmPayload = { confirmation_method: 'manual' };
+  if (order.interval) {
+    confirmPayload.setup_future_usage = 'off_session';
+  } else if (!order.processedAt && order.data.savePaymentMethod) {
+    confirmPayload.setup_future_usage = 'on_session';
+  }
+  paymentIntent = await stripe.paymentIntents.confirm(paymentIntent.id, confirmPayload, {
+    stripe_account: hostStripeAccount.username,
+  });
 
   if (paymentIntent.next_action) {
     order.data.paymentIntent = { id: paymentIntent.id, status: paymentIntent.status };
@@ -258,7 +258,7 @@ export default {
         hostStripeCustomer,
       });
     } catch (error) {
-      logger.error(`Stripe Payment Error: ${error.message}`);
+      logger.error(`Stripe Payment Error. Order: ${order.id}. ${error.message}`);
       logger.error(error);
       throw error;
     }
