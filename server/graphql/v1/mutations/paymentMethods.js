@@ -1,4 +1,4 @@
-import { pick } from 'lodash';
+import { pick, omit } from 'lodash';
 import { URLSearchParams } from 'url';
 
 import virtualcard from '../../../paymentProviders/opencollective/virtualcard';
@@ -194,4 +194,29 @@ export async function updatePaymentMethod(args, remoteUser) {
   }
 
   return models.PaymentMethod.update(pick(args, allowedFields), { where: { id: paymentMethod.id } });
+}
+
+/** Update payment method with given args */
+export async function replaceCreditCard(args, remoteUser) {
+  const oldPaymentMethod = await models.PaymentMethod.findByPk(args.id);
+  if (!oldPaymentMethod || !remoteUser || !remoteUser.isAdmin(oldPaymentMethod.CollectiveId)) {
+    throw PaymentMethodPermissionError;
+  }
+
+  args = omit(args, ['id']);
+
+  const newPaymentMethod = await createPaymentMethod({ ...args, service: 'stripe', type: 'creditcard' }, remoteUser);
+
+  // Update orders (using Sequelize)
+  // first arg in new thing, second arg is old thing it's replacing
+  await models.Order.update(
+    { PaymentMethodId: newPaymentMethod.id },
+    { where: { PaymentMethodId: oldPaymentMethod.id } },
+  );
+
+  // Delete or hide the old Payment Method (using Sequelize) - destroy instead of delete
+  await oldPaymentMethod.destroy();
+
+  // TODO: What should we return? The new Credit Card perhaps
+  return newPaymentMethod;
 }

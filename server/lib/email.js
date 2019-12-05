@@ -336,6 +336,7 @@ const generateEmailFromTemplateAndSend = async (template, recipient, data, optio
   }
 
   const notificationIsActive = await isNotificationActive(template, data);
+
   if (!notificationIsActive) {
     logger.info(`Email with template '${template}' not sent. Recipient email notification is not active.`);
     return;
