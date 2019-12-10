@@ -21,6 +21,10 @@ export function paypalUrl(path) {
 
 /** Exchange clientid and secretid by an auth token with PayPal API */
 export async function retrieveOAuthToken() {
+  // TODO: we need to store and extract clientId and clientSecret from the database
+  // TODO: we need to have the host object available from there (Collectives table entry)
+  // host.settings.paypal.clientId
+  // host.settings.paypal.clientSecret
   const { clientId, clientSecret } = config.paypal.payment;
   const url = paypalUrl('oauth2/token');
   const body = 'grant_type=client_credentials';
@@ -83,6 +87,7 @@ export async function createPayment(req, res) {
       cancel_url: 'https://opencollective.com',
     },
   };
+  // TODO: we need to have the host object available from there (Collectives table entry)
   const payment = await paypalRequest('payments/payment', paymentParams);
   return res.json({ id: payment.id });
 }
@@ -94,6 +99,7 @@ export async function createPayment(req, res) {
  */
 export async function executePayment(order) {
   const { paymentID, payerID } = order.paymentMethod.data;
+  // TODO: we need to have the host object available from there (Collectives table entry)
   return paypalRequest(`payments/payment/${paymentID}/execute`, {
     payer_id: payerID,
   });
