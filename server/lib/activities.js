@@ -281,6 +281,9 @@ export default {
       case activities.ORDERS_SUSPICIOUS:
         return `Suspicious Order: ${userString} gave ${currency} ${amount} to ${collective}. Score: ${activity.data.recaptchaResponse.score}`;
 
+      case activities.COLLECTIVE_BADWORD_DETECTED:
+        return getBadWordString(activity, collectiveName, publicUrl);
+
       default:
         return '';
     }
@@ -337,4 +340,25 @@ const getUserString = (format, userCollective, email) => {
     returnVal += ` (${email})`;
   }
   return returnVal;
+};
+
+const getBadWordString = (activity, collectiveName, publicUrl) => {
+  const { warnings } = activity.data;
+  const fields = Object.keys(warnings);
+
+  let message = '';
+  fields.forEach(field => {
+    message += `Field "${field}" for <${collectiveName}|${publicUrl}> was set to a suspicious value/s: [ ${warnings[
+      field
+    ].join(', ')} ]\n`;
+  });
+  /* 
+  TODO: Remove this when test slack. Example Response:
+  
+    Field "name" for <qketoed lsfpills |http://localhost:3000/qketoed-lsfpills> was set to a suspicious value/s: [ keto, pills ]
+    Field "website" for <qketoed lsfpills |http://localhost:3000/qketoed-lsfpills> was set to a suspicious value/s: [ keto, pills ]
+    Field "description" for <qketoed lsfpills |http://localhost:3000/qketoed-lsfpills> was set to a suspicious value/s: [ pills ]
+  */
+  console.log(message);
+  return message;
 };
