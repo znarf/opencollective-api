@@ -99,14 +99,6 @@ export async function createCollective(_, args, req) {
   }
 
   try {
-    const suspiciosKeywordCheckList = ['name', 'website', 'description'];
-    suspiciosKeywordCheckList.forEach(prop => {
-      const suspiciousKeywords = getSuspiciousKeywords(collectiveData[prop]);
-      if (suspiciousKeywords.length) {
-        console.log('Suspicious Keyword !!!', suspiciousKeywords, prop);
-      }
-    });
-
     collective = await models.Collective.create(omit(collectiveData, ['HostCollectiveId', 'hostFeePercent']));
   } catch (e) {
     let msg;

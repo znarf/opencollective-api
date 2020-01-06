@@ -49,6 +49,7 @@ import { types } from '../constants/collectives';
 import expenseStatus from '../constants/expense_status';
 import expenseTypes from '../constants/expense_type';
 import { getFxRate } from '../lib/currency';
+import spamController from '../lib/spam';
 
 const debug = debugLib('collective');
 const debugcollectiveImage = debugLib('collectiveImage');
@@ -647,6 +648,11 @@ export default function(Sequelize, DataTypes) {
               primary: true,
               currency: instance.currency,
             });
+          }
+
+          if (instance.type === 'COLLECTIVE') {
+            const spamCheck = spamController.collectiveCheck(instance);
+            console.log(spamCheck);
           }
 
           return null;
