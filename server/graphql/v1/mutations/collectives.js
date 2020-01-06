@@ -12,7 +12,6 @@ import * as errors from '../../errors';
 import emailLib from '../../../lib/email';
 import * as github from '../../../lib/github';
 import { defaultHostCollective } from '../../../lib/utils';
-import { getSuspiciousKeywords } from '../../../lib/spam';
 
 import roles from '../../../constants/roles';
 import activities from '../../../constants/activities';
