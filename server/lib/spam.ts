@@ -2,13 +2,25 @@ interface Collective {
     id: string;
 }
 
+/**
+ * SpamControl: Singleton Design Pattern
+ */
 class SpamControl {
+    private static instance: SpamControl
     private collectiveCheckList: string[] = ['name', 'website', 'description', 'longDescription']
     private blackList: string[] = [
         "keto",
         "porn",
         "pills"
     ];
+
+    public static getInstance(): SpamControl {
+        if(!SpamControl.instance) {
+            SpamControl.instance = new SpamControl();
+        }
+
+        return SpamControl.instance;
+    }
 
     /**
      * Returns SuspiciousKeywords
@@ -28,9 +40,9 @@ class SpamControl {
      * 
      * @param collective {Collective}
      */
-    private collectiveCheck(collective: Collective): {collectiveId: string; warnings: object} {
+    private collectiveCheck(collective: Collective): {collective: Collective; warnings: object} {
         const result = {
-            collectiveId: collective.id,
+            collective,
             warnings: {}
         }
         this.collectiveCheckList.forEach(prop => {
@@ -44,5 +56,5 @@ class SpamControl {
 
 }
 
-const spamController = new SpamControl()
+const spamController = SpamControl.getInstance()
 export default spamController

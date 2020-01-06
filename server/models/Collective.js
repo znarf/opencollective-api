@@ -50,6 +50,7 @@ import expenseStatus from '../constants/expense_status';
 import expenseTypes from '../constants/expense_type';
 import { getFxRate } from '../lib/currency';
 import spamController from '../lib/spam';
+import slackLib from '../lib/slack';
 
 const debug = debugLib('collective');
 const debugcollectiveImage = debugLib('collectiveImage');
@@ -650,9 +651,18 @@ export default function(Sequelize, DataTypes) {
             });
           }
 
+          // TODO: add webhook
           if (instance.type === 'COLLECTIVE') {
             const spamCheck = spamController.collectiveCheck(instance);
-            console.log(spamCheck);
+            if (Object.keys(spamCheck).length) {
+              slackLib.postActivityOnPublicChannel(
+                {
+                  type: activities.COLLECTIVE_BADWORD_DETECTED,
+                  data: spamCheck,
+                },
+                'WEBHOOK',
+              );
+            }
           }
 
           return null;
