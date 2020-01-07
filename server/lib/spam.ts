@@ -57,4 +57,8 @@ class SpamControl {
 }
 
 const spamController = SpamControl.getInstance()
+<<<<<<< HEAD
 export default spamController
+=======
+export default spamController
+>>>>>>> f98a331012bbcd60c065666e0f9b8fe16675b9d7
