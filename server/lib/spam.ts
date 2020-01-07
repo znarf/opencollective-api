@@ -56,5 +56,4 @@ class SpamControl {
 
 }
 
-const spamController = SpamControl.getInstance()
-export default spamController
+export default SpamControl.getInstance()
